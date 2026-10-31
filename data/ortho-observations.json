@@ -1,0 +1,323 @@
+{
+  "source": "GUGiK / PZGiK — ortofotomapa RGB",
+  "sourceUrl": "https://opendata.geoportal.gov.pl/ortofotomapa/81421/81421_1364771_M-34-92-B-c-1-4.tif",
+  "imageryDate": "2024-06-19",
+  "pixelSizeMetres": 0.25,
+  "sheet": "M-34-92-B-c-1-4",
+  "processedAt": "2026-10-31T15:11:28.397434+00:00",
+  "sha256": "04aeba160a1eada968b967a828e0d7996aac46d48b3c2d27825632e9a926591e",
+  "method": "Median RGB inside OSM building footprints, eroded 0.5 m; omit deep shadows and outliers. Approximate roof appearance, not material identification.",
+  "limitations": "One sheet only. No inferred heights, facade colors or footprint corrections. Trees, shadows and OSM misalignment can affect samples.",
+  "buildings": {
+    "way/324876282": {
+      "color": "#a3a9b4",
+      "samples": 1538,
+      "spread": 4.0
+    },
+    "way/324876284": {
+      "color": "#ced6d8",
+      "samples": 307,
+      "spread": 1.0
+    },
+    "way/324876286": {
+      "color": "#4e575c",
+      "samples": 1782,
+      "spread": 17.0
+    },
+    "way/402840427": {
+      "color": "#a2a89e",
+      "samples": 4824,
+      "spread": 9.0
+    },
+    "way/402840730": {
+      "color": "#445545",
+      "samples": 154,
+      "spread": 9.0
+    },
+    "way/402840625": {
+      "color": "#cd8c95",
+      "samples": 721,
+      "spread": 2.0
+    },
+    "way/402840682": {
+      "color": "#5b7d78",
+      "samples": 607,
+      "spread": 26.0
+    },
+    "way/402840865": {
+      "color": "#4d5e53",
+      "samples": 144,
+      "spread": 8.0
+    },
+    "way/759877800": {
+      "color": "#ccd2d5",
+      "samples": 282,
+      "spread": 5.0
+    },
+    "way/1198722944": {
+      "color": "#b09e9f",
+      "samples": 301,
+      "spread": 4.0
+    },
+    "way/139202015": {
+      "color": "#d1bbc1",
+      "samples": 17483,
+      "spread": 13.0
+    },
+    "way/402687354": {
+      "color": "#eceeed",
+      "samples": 168,
+      "spread": 1.0
+    },
+    "way/402840434": {
+      "color": "#dec1bd",
+      "samples": 2240,
+      "spread": 4.0
+    },
+    "way/402840614": {
+      "color": "#a38489",
+      "samples": 2511,
+      "spread": 23.0
+    },
+    "way/402840659": {
+      "color": "#dbe2e1",
+      "samples": 80,
+      "spread": 2.0
+    },
+    "way/402840758": {
+      "color": "#516555",
+      "samples": 324,
+      "spread": 12.0
+    },
+    "way/402840816": {
+      "color": "#474653",
+      "samples": 65,
+      "spread": 1.0
+    },
+    "way/402840925": {
+      "color": "#889076",
+      "samples": 169,
+      "spread": 24.0
+    },
+    "way/906272385": {
+      "color": "#6e7b68",
+      "samples": 239,
+      "spread": 5.0
+    },
+    "way/1093117850": {
+      "color": "#8c9eaa",
+      "samples": 79,
+      "spread": 28.0
+    },
+    "way/1093117851": {
+      "color": "#959599",
+      "samples": 60,
+      "spread": 7.5
+    },
+    "way/1093117853": {
+      "color": "#eaecea",
+      "samples": 323,
+      "spread": 2.0
+    },
+    "way/139201989": {
+      "color": "#d8dee1",
+      "samples": 8132,
+      "spread": 4.0
+    },
+    "way/139202013": {
+      "color": "#d1ddd4",
+      "samples": 9131,
+      "spread": 3.0
+    },
+    "way/139202045": {
+      "color": "#ccced2",
+      "samples": 2997,
+      "spread": 7.0
+    },
+    "way/139202243": {
+      "color": "#d9ddda",
+      "samples": 1847,
+      "spread": 6.0
+    },
+    "way/139202246": {
+      "color": "#969db4",
+      "samples": 3736,
+      "spread": 13.0
+    },
+    "way/139202248": {
+      "color": "#98bbb2",
+      "samples": 4303,
+      "spread": 8.0
+    },
+    "way/139202249": {
+      "color": "#a399a2",
+      "samples": 12171,
+      "spread": 8.0
+    },
+    "way/139202251": {
+      "color": "#d5b9bc",
+      "samples": 1165,
+      "spread": 3.0
+    },
+    "way/139202252": {
+      "color": "#cbd0ce",
+      "samples": 9530,
+      "spread": 8.0
+    },
+    "way/139202257": {
+      "color": "#9cd1c3",
+      "samples": 4146,
+      "spread": 9.0
+    },
+    "way/139202267": {
+      "color": "#cacfcf",
+      "samples": 8745,
+      "spread": 7.0
+    },
+    "way/139202269": {
+      "color": "#d0dacd",
+      "samples": 7307,
+      "spread": 6.0
+    },
+    "way/139202273": {
+      "color": "#7f8fa7",
+      "samples": 5567,
+      "spread": 13.0
+    },
+    "way/402840174": {
+      "color": "#b3b9bf",
+      "samples": 6373,
+      "spread": 10.0
+    },
+    "way/402840179": {
+      "color": "#c1c6cc",
+      "samples": 3049,
+      "spread": 28.0
+    },
+    "way/402840180": {
+      "color": "#787068",
+      "samples": 346,
+      "spread": 15.0
+    },
+    "way/402840281": {
+      "color": "#c8a7a7",
+      "samples": 2939,
+      "spread": 5.0
+    },
+    "way/402840525": {
+      "color": "#bba8b3",
+      "samples": 1448,
+      "spread": 4.0
+    },
+    "way/402840636": {
+      "color": "#b3afb6",
+      "samples": 2125,
+      "spread": 8.0
+    },
+    "way/402840750": {
+      "color": "#646c7b",
+      "samples": 802,
+      "spread": 31.5
+    },
+    "way/402840775": {
+      "color": "#698161",
+      "samples": 192,
+      "spread": 6.0
+    },
+    "way/402840778": {
+      "color": "#cedbd4",
+      "samples": 295,
+      "spread": 5.0
+    },
+    "way/402840840": {
+      "color": "#927a83",
+      "samples": 335,
+      "spread": 3.0
+    },
+    "way/402840878": {
+      "color": "#bcbbc0",
+      "samples": 202,
+      "spread": 1.5
+    },
+    "way/430178562": {
+      "color": "#5d745d",
+      "samples": 292,
+      "spread": 8.0
+    },
+    "way/430178572": {
+      "color": "#505d4e",
+      "samples": 110,
+      "spread": 3.5
+    },
+    "way/906273458": {
+      "color": "#797a72",
+      "samples": 227,
+      "spread": 7.0
+    },
+    "way/906274773": {
+      "color": "#6c7369",
+      "samples": 219,
+      "spread": 10.0
+    },
+    "way/1093117811": {
+      "color": "#ca8891",
+      "samples": 224,
+      "spread": 14.5
+    },
+    "way/1240779138": {
+      "color": "#a28d7d",
+      "samples": 240,
+      "spread": 5.0
+    },
+    "way/402840512": {
+      "color": "#baa5a5",
+      "samples": 4778,
+      "spread": 14.0
+    },
+    "way/887043737": {
+      "color": "#b3c8c5",
+      "samples": 836,
+      "spread": 10.0
+    },
+    "way/887043852": {
+      "color": "#b5b4bb",
+      "samples": 441,
+      "spread": 5.0
+    },
+    "way/887043912": {
+      "color": "#b59298",
+      "samples": 2452,
+      "spread": 5.0
+    },
+    "way/887043979": {
+      "color": "#d3d5d5",
+      "samples": 364,
+      "spread": 14.0
+    },
+    "way/887044205": {
+      "color": "#d1bab9",
+      "samples": 718,
+      "spread": 6.0
+    },
+    "way/906274875": {
+      "color": "#a4aeb8",
+      "samples": 209,
+      "spread": 3.0
+    },
+    "way/1093190651": {
+      "color": "#ae9bad",
+      "samples": 823,
+      "spread": 1.0
+    },
+    "way/1093190656": {
+      "color": "#667662",
+      "samples": 263,
+      "spread": 8.0
+    },
+    "way/1093190657": {
+      "color": "#d2cfc1",
+      "samples": 160,
+      "spread": 12.5
+    }
+  }
+}

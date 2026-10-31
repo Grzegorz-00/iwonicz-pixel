@@ -56,3 +56,19 @@ Panel nad mapą: **Pauza / Wznów**, prędkości **1× / 2× / 4×**, **Centrum*
 Aktualne adresy mają format `#iso@x,y,zoom,id`; wcześniejsze adresy `#osm@…` są przeliczane na izometrię. Podziałka odnosi się do poziomej osi widoku (w izometrii skala pionowa jest inna). Do hostingu statycznego dołącz również `traffic.js`.
 
 Testy obejmują graf ruchu, ograniczenia dostępu, ciągłość przechodzenia między odcinkami i projekcję izometryczną. W Chromium sprawdzono zmianę klatek animacji, brak ruchu po pauzie, prędkości, odtwarzanie adresów i ograniczenie animacji.
+
+## Dokładniejsze kolory dachów ze zdjęć lotniczych
+
+[Analiza źródeł, dat, rozdzielczości i ograniczeń](docs/orthophoto-research.md). Wykorzystano oryginalny GeoTIFF RGB GUGiK/PZGiK z **19 czerwca 2024 r., 25 cm/piksel**, arkusz M-34-92-B-c-1-4. `data/ortho-observations.json` zawiera przybliżone kolory 62 obrysów budynków z tego arkusza, metodę i sumę SHA-256 materiału źródłowego. Próbki są liczone wewnątrz obrysów OSM, z pominięciem krawędzi, głębokich cieni i wartości odstających. Nie wyznaczano wysokości ani materiałów. Nie jest to pełne pokrycie miasta. Przy obiektach z próbką karta miejsca podaje datę zdjęcia i przybliżony charakter pomiaru.
+
+Mapa nie pobiera zdjęć podczas oglądania. `appearance.js` i `data/ortho-observations.json` muszą być również dostępne na hostingu statycznym. Dokumentacyjny podgląd zdjęcia pochodzi z GUGiK/PZGiK, nie z OSM.
+
+Opcjonalne odtworzenie analizy (niepotrzebne do uruchamiania strony): Python 3.12 i biblioteki z `scripts/requirements-orthophoto.txt`, najlepiej w osobnym środowisku wirtualnym. Pobierz [oryginalny GeoTIFF](https://opendata.geoportal.gov.pl/ortofotomapa/81421/81421_1364771_M-34-92-B-c-1-4.tif), następnie:
+
+```sh
+python3 scripts/analyze-orthophoto.py /sciezka/do/arkusza.tif \
+  --source-url https://opendata.geoportal.gov.pl/ortofotomapa/81421/81421_1364771_M-34-92-B-c-1-4.tif \
+  --date 2024-06-19
+```
+
+Importer tej analizy obsługuje wyłącznie zdjęcia północne GeoTIFF EPSG:2180 i nie zastępuje analizy dowolnych arkuszy. Dla kolejnego arkusza należy też zaktualizować jego godło w skrypcie. Pobieranie pełnego pliku może potrwać kilka minut; nie jest konieczne do odtworzenia bieżącej mapy.

@@ -10,7 +10,10 @@ try {
  const notice=document.createElement('div');notice.className='map-error';notice.textContent='Nie udało się wczytać danych mapy. Odśwież stronę lub sprawdź połączenie.';
  document.querySelector('.map').append(notice);throw error;
 }
-const osm=createOSMMap(mapData),scene=osm.scene,places=osm.places;
+const photoResponse=await fetch('./data/ortho-observations.json');
+if(!photoResponse.ok)throw new Error('Nie udało się wczytać metadanych ortofotomapy');
+const photoObservations=await photoResponse.json();
+const osm=createOSMMap(mapData,photoObservations),scene=osm.scene,places=osm.places;
 const simulation=createSimulation(buildNetwork(mapData.elements,osm.projection.project,osm.isInside));
 const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 let paused=motionPreference.matches,simulationSpeed=1;
@@ -18,7 +21,7 @@ const WORLD_W=scene.width,WORLD_H=scene.height,MAX_ZOOM=12;
 const home=()=>({x:WORLD_W/2,y:WORLD_H/2,z:1});
 const escaped=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labelBoxes=new Map(),drawnMarkers=new Set();
-document.querySelector('#map-status').textContent=`${osm.stats.buildings} budynków · cały obszar miasta`;
+document.querySelector('#map-status').textContent=`${osm.stats.buildings} budynków · ${osm.stats.observedRoofs} dachów wg ortofotomapy`;
 document.querySelector('#source-date').textContent=new Date(mapData.retrievedAt).toLocaleDateString('pl-PL');
 let view={...home(),...osm.places.find(p=>p.id==='pijalnia'),z:innerWidth<760?6:3},selected=null,labels=true,filter='all',query='',width=0,height=0,fit=1,drag=null,moved=false,pointers=new Map(),pinch=null;
 const hash=location.hash.match(/^#(?:iso|osm)@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)(?:,([a-z0-9-]+))?$/);if(hash){view={x:Math.max(0,Math.min(location.hash.startsWith('#osm@')?osm.projection.base.width:WORLD_W,+hash[1])),y:Math.max(0,Math.min(location.hash.startsWith('#osm@')?osm.projection.base.height:WORLD_H,+hash[2])),z:Math.max(.65,Math.min(MAX_ZOOM,+hash[3]))};selected=places.find(p=>p.id===hash[4])||null;}
@@ -51,7 +54,7 @@ function draw(){
 function resize(){const r=canvas.getBoundingClientRect();width=r.width;height=r.height;canvas.width=Math.round(width*devicePixelRatio);canvas.height=Math.round(height*devicePixelRatio);fit=Math.min(width/WORLD_W,height/WORLD_H)*.94;draw();}new ResizeObserver(resize).observe(canvas);
 function visiblePlaces(){return places.filter(p=>(filter==='all'||p.category===filter)&&(p.name+" "+p.kind).toLocaleLowerCase('pl').includes(query.toLocaleLowerCase('pl')));}
 function renderList(){const list=document.querySelector('#places');list.replaceChildren();const visible=visiblePlaces();document.querySelector('#count').textContent=String(visible.length).padStart(2,'0');if(!visible.length){const el=document.createElement('p');el.className='empty';el.textContent='Nie znaleziono miejsca. Spróbuj innej nazwy lub kategorii.';list.append(el);}for(const p of visible){const button=document.createElement('button');button.className='place'+(selected?.id===p.id?' selected':'');button.setAttribute('aria-pressed',String(selected?.id===p.id));button.innerHTML=`<span class="place-icon ${p.category==='nature'?'green':''}">${p.icon}</span><span class="place-copy"><strong>${escaped(p.name)}</strong><small>${escaped(p.kind)}</small></span><span class="place-arrow">→</span>`;button.onclick=()=>select(p);list.append(button);}draw();}
-function renderCard(){const card=document.querySelector('#card');card.hidden=!selected;if(!selected)return;card.innerHTML=`<button class="close" aria-label="Zamknij opis">×</button><span class="tag">${selected.category==='nature'?'NATURA I SPACERY':'ARCHITEKTURA UZDROWISKA'}</span><h2>${escaped(selected.name)}</h2><p>${escaped(selected.desc)}</p><div class="card-foot"><a href="https://www.openstreetmap.org/${selected.osmType}/${selected.osmId}" target="_blank" rel="noopener noreferrer">Zobacz obiekt w OpenStreetMap →</a></div>`;card.querySelector('button').onclick=()=>{selected=null;renderCard();renderList();save();};}
+function renderCard(){const card=document.querySelector('#card');card.hidden=!selected;if(!selected)return;card.innerHTML=`<button class="close" aria-label="Zamknij opis">×</button><span class="tag">${selected.category==='nature'?'NATURA I SPACERY':'ARCHITEKTURA UZDROWISKA'}</span><h2>${escaped(selected.name)}</h2><p>${escaped(selected.desc)}</p>${selected.roofObserved?'<p class="photo-source">Kolor dachu: ortofotomapa GUGiK, 19.06.2024 · pomiar przybliżony.</p>':''}<div class="card-foot"><a href="https://www.openstreetmap.org/${selected.osmType}/${selected.osmId}" target="_blank" rel="noopener noreferrer">Zobacz obiekt w OpenStreetMap →</a></div>`;card.querySelector('button').onclick=()=>{selected=null;renderCard();renderList();save();};}
 function select(p){selected=p;view.x=p.x;view.z=Math.max(view.z,4);view.y=p.y+height*.28/(fit*view.z);renderCard();renderList();save();}
 function zoom(amount,anchor){const old=view.z;view.z=Math.max(.65,Math.min(MAX_ZOOM,view.z*amount));if(anchor){view.x+=(anchor.x-width/2)/fit*(1/old-1/view.z);view.y+=(anchor.y-height/2)/fit*(1/old-1/view.z);}draw();save();}
 document.querySelector('#zoom-in').onclick=()=>zoom(1.2);document.querySelector('#zoom-out').onclick=()=>zoom(1/1.2);document.querySelector('#reset').onclick=()=>{view=home();selected=null;renderCard();renderList();save();};document.querySelector('#labels').onclick=e=>{labels=!labels;e.currentTarget.setAttribute('aria-pressed',String(labels));draw();};
