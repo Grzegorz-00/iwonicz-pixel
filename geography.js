@@ -20,3 +20,13 @@ export function polygonRings(element) {
 }
 export function contains(point,rings){let inside=false;for(const ring of rings){for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;}}return inside;}
 export function featureCenter(element,project){if(element.type==='node')return project(element);const geometry=element.geometry||element.members?.flatMap(m=>m.geometry||[])||[];if(!geometry.length)return null;const p=geometry.map(project);return {x:(Math.min(...p.map(p=>p.x))+Math.max(...p.map(p=>p.x)))/2,y:(Math.min(...p.map(p=>p.y))+Math.max(...p.map(p=>p.y)))/2};}
+
+/** 2:1 isometric view; geographic data remains unchanged. */
+export function makeIsometricProjection(bbox){
+ const base=makeProjection(bbox);const padding=80;
+ const width=Math.ceil((base.width+base.height)*.8+padding*2);
+ const height=Math.ceil((base.width+base.height)*.4+padding*2);
+ const toIso=({x,y})=>({x:(x-y)*.8+base.height*.8+padding,y:(x+y)*.4+padding});
+ const fromIso=({x,y})=>{const dx=(x-base.height*.8-padding)/.8,dy=(y-padding)/.4;return {x:(dx+dy)/2,y:(dy-dx)/2};};
+ return {width,height,metresPerUnit:base.metresPerUnit/.8,project:p=>toIso(base.project(p)),unproject:p=>base.unproject(fromIso(p)),toIso,fromIso,base};
+}
