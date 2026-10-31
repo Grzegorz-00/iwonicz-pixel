@@ -1,27 +1,46 @@
 # Iwonicz Pixel
 
-Autorska, interaktywna mapa ilustracyjna Iwonicza-Zdroju. Czysty JavaScript i Canvas, bez zewnętrznych zależności i usług. Ilustracja jest schematyczna — nie służy do nawigacji.
+Interaktywna mapa całego miasta Iwonicz-Zdrój w pikselowej stylistyce. Rzeczywiste granice administracyjne, drogi i ścieżki, obrysy budynków, wody oraz tereny zielone pochodzą z OpenStreetMap. Bez zewnętrznych bibliotek przeglądarkowych i bez pobierania kafelków.
 
 ## Uruchomienie
 
-Wymagany Node.js 20 lub nowszy. W katalogu repozytorium:
+Node.js 20 lub nowszy:
 
 ```sh
 npm start
 ```
 
-Domyślny port: 3000, opcjonalnie zmienna `PORT`. Nie jest potrzebne `npm install` ani kompilacja. Pliki `index.html`, `style.css` i `app.js` można również opublikować na dowolnym hostingu statycznym.
+Port 3000, opcjonalnie `PORT`. Nie potrzeba instalacji zależności ani kompilacji. Na hostingu statycznym udostępnij `index.html`, `style.css`, `app.js`, `osm-map.js`, `geography.js` oraz katalog `data/`. Do lokalnego podglądu użyj serwera HTTP, nie `file://`.
 
-## Funkcje
+## Obszar i źródło
 
-- Przeciąganie mapy myszą lub dotykiem, powiększanie kółkiem, gestem i przyciskami.
-- Sześć miejsc z opisami, wyszukiwanie i filtrowanie według kategorii.
-- Udostępnianie widoku i wybranego miejsca przez fragment adresu.
-- Obsługa klawiatury: `/` przenosi do wyszukiwania; na mapie strzałki przesuwają, `+` i `-` zmieniają skalę. Escape zamyka opis.
-- Układ dostosowany do telefonu i komputera, przełączanie nazw, reset widoku.
+Mapa obejmuje **miasto Iwonicz-Zdrój**, relację [OSM 3015693](https://www.openstreetmap.org/relation/3015693), `admin_level=8`. Nie jest to cała gmina Iwonicz-Zdrój. Zestaw danych obejmuje pełny prostokąt ograniczający granicę miasta; warstwy są przycinane do granicy podczas rysowania. Obiekty przecinające granicę zachowują pełną geometrię w pliku źródłowym.
 
-Grafika generowana lokalnie, bez pobierania kafelków i bez kopiowania materiałów ze strony inspiracyjnej. Położenia i wizerunki budynków są umowne. Dane miejsc znajdują się na początku `app.js`.
+W `data/iwonicz-osm.json` zapisano 3413 obiektów pobranych z oficjalnego API OSM. Data pobrania i bbox są w metadanych. Pozostałe metadane edytorów OSM (nazwy użytkowników, UID) nie są przechowywane. Budynki i drogi są rysowane z rzeczywistych współrzędnych, z lokalnym przeliczeniem skali długości geograficznej. Drzewa są dekoracją wyłącznie wewnątrz obszarów lasów, nie inwentaryzacją pojedynczych drzew. Kolory i wysokości ścian są stylizowane. To mapa poglądowa, bez wyznaczania tras.
+
+**Dane: © OpenStreetMap contributors, licencja ODbL 1.0.** [Prawa i warunki](https://www.openstreetmap.org/copyright), [tekst licencji](https://opendatacommons.org/licenses/odbl/1-0/). Dołącz atrybucję i licencję przy dalszym udostępnianiu danych. Dane OSM mogą być niekompletne lub nieaktualne. Lokalny plik danych jest dostępny przez serwer pod `/data/iwonicz-osm.json`.
+
+## Aktualizacja danych
+
+Wymagane Python 3, curl oraz dostęp HTTPS do `api.openstreetmap.org`:
+
+```sh
+npm run import:osm
+```
+
+Importer pobiera pełną relację granicy miasta i jej bbox w małych fragmentach, scala obiekty według typu i identyfikatora oraz pobiera pełne geometrie multipolygonów. Korzysta ze standardowego proxy i weryfikacji TLS curl. Nie wymaga kluczy API. Błędny import nie zastępuje istniejącego zestawu danych. Cache w `/tmp/iwonicz-osm-cache` jest ważny dobę; `node scripts/import-osm.mjs --cache /tmp/inny-cache` pozwala wykonać świeży import. Żądania są sekwencyjne z ograniczonymi ponowieniami. Zestaw jest migawką z czasu pobierania, nie transakcyjnym eksportem całej bazy w jednej sekundzie. Odbiorcy strony nie odpytują API OSM.
+
+Overpass okazał się niedostępny podczas pracy; aplikacja i importer korzystają z oficjalnego API OSM, nie z Overpass.
+
+## Obsługa
+
+- Przeciąganie myszą i dotykiem, powiększanie kółkiem, gestem lub przyciskami, do 1200%.
+- 92 nazwane miejsca z OSM, sześć wyróżnionych; wyszukiwanie, kategorie, opisy i odsyłacze do obiektów źródłowych.
+- W widoku całego miasta wyróżnione miejsca; kolejne oznaczenia pojawiają się po powiększeniu. Wyszukiwanie i filtry pokazują wyniki także w ogólnym widoku.
+- Podziałka, granica miasta, nazwy ulic przy większym przybliżeniu, przełącznik etykiet i reset do całego miasta.
+- Widok i wybrany obiekt w adresie `#osm@x,y,zoom,id`. Dawne schematyczne współrzędne `#@…` nie są stosowane do nowej mapy.
+- `/` — wyszukiwanie; strzałki na mapie — przesuwanie; `+`/`-` — skala; Escape — zamknięcie opisu.
 
 ## Weryfikacja
 
-`npm test` sprawdza odpowiedzi HTTP, typy zasobów oraz blokowanie dostępu do plików repozytorium. Interakcje mapy, wyszukiwanie, filtry, odtwarzanie adresu i układ mobilny sprawdzono również w Chromium.
+`npm test` sprawdza serwer HTTP, typy zasobów, ochronę plików repozytorium, importer, geograficzną projekcję, łączenie granic, otwory w wielokątach oraz kompletność rzeczywistego zestawu. Interakcje, odtworzenie adresu, linki OSM i układ telefonu sprawdzono również w Chromium.
