@@ -16,7 +16,7 @@ if(!photoResponse.ok)throw new Error('Nie udało się wczytać metadanych ortofo
 const photoObservations=await photoResponse.json();
 const osm=createOSMMap(mapData,photoObservations),scene=osm.scene,places=osm.places;
 const specialCar=locateSpecialCar(mapData,osm.projection.project);
-places.push({id:'zdrojowa-87',name:'Zdrojowa 87 · skurczybyk',kind:'Szary SUV z 1990 roku',category:'architecture',icon:'⌂',x:specialCar.x,y:specialCar.y,osmType:'way',osmId:specialCar.houseId,desc:'Zaparkowany szary SUV inspirowany Cherokee XJ z 1990 roku. Autorski dodatek do mapy przy adresie Zdrojowa 87; nie przedstawia rzeczywistego stanu parkowania.'});
+places.push({id:'zdrojowa-87',name:'Zdrojowa 87 · skurwysyn',kind:'Szary SUV z 1990 roku',category:'architecture',icon:'⌂',x:specialCar.x,y:specialCar.y,osmType:'way',osmId:specialCar.houseId,desc:'Zaparkowany szary SUV inspirowany Cherokee XJ z 1990 roku. Autorski dodatek do mapy przy adresie Zdrojowa 87; nie przedstawia rzeczywistego stanu parkowania.'});
 const simulation=createSimulation(buildNetwork(mapData.elements,osm.projection.project,osm.isInside));
 const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 let paused=motionPreference.matches,simulationSpeed=1;

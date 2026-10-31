@@ -11,5 +11,5 @@ export function locateSpecialCar(data,project){
  if(!best||best.distance>150)throw new Error('Brak pobliskiego dojazdu dla Zdrojowej 87');
  const distance=Math.max(1,best.distance);let parking={x:best.x+(center.x-best.x)/distance*5,y:best.y+(center.y-best.y)/distance*5};
  if(contains(parking,outline))parking={x:best.x,y:best.y};
- return {...parking,dx:best.dx,dy:best.dy,id:'skurczybyk',kind:'car',model:'cherokee-1990',color:4,stationary:true,moving:false,label:'skurczybyk',address:'Zdrojowa 87',houseId:house.id,roadId:best.roadId,houseCenter:center};
+ return {...parking,dx:best.dx,dy:best.dy,id:'skurwysyn',kind:'car',model:'cherokee-1990',color:4,stationary:true,moving:false,label:'skurwysyn',address:'Zdrojowa 87',houseId:house.id,roadId:best.roadId,houseCenter:center};
 }
