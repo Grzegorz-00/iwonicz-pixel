@@ -88,3 +88,11 @@ Domy oznaczone w OSM jako `house`, `detached`, `semidetached_house`, `bungalow`,
 `building-model.js` wyznacza kierunek kalenicy z obrysu budynku, dzieli dach na dwie połacie i dodaje ściany szczytowe. Obrysy, kolory pochodzące z ortofotomapy i raster o większej gęstości pozostają zachowane. Reguła dachów i limit wysokości realizują założenie wizualne użytkownika; nie są pomiarem liczby pięter ani pełną rekonstrukcją wszystkich dachów ze zdjęć. Złożone obrysy mają uproszczoną wspólną kalenicę. Moduł należy udostępnić również na hostingu statycznym.
 
 Ponownie przeanalizowano ortofotomapę GUGiK HighResolution w okolicy Zdrojowej (bbox `21.790,49.5715,21.7955,49.5752`). Widoczne dachy skośne uzasadniają porzucenie jednolitego płaskiego modelu domów; występują także dachy wielospadowe. Data tego kadru nie była ustalana osobno. Maksymalna liczba kondygnacji jest regułą projektu, nie wnioskiem z tego zdjęcia.
+
+## GitHub Pages
+
+Strona: **https://grzegorz-00.github.io/iwonicz-pixel/**
+
+Workflow `.github/workflows/pages.yml` testuje projekt, przygotowuje statyczną paczkę i wdraża ją na GitHub Pages przy każdym pushu na `main`. Można go uruchomić również ręcznie w zakładce Actions. Publikowany jest katalog `dist/` zawierający wyłącznie pliki strony i dwa zestawy JSON. Serwer deweloperski, testy, skrypty analizy i dokumentacja nie są częścią publikowanej paczki.
+
+Lokalne przygotowanie identycznej paczki: `npm run build:pages`. Odnośniki, importy modułów i pobieranie JSON są względne, więc działają także w podkatalogu `/iwonicz-pixel/`. W Settings → Pages źródłem wdrożenia jest GitHub Actions. Wdrożenie nie wykonuje nowych zapytań do OSM ani Geoportalu — korzysta z danych zapisanych w repozytorium.

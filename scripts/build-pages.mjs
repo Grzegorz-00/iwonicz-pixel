@@ -1,0 +1,11 @@
+import {copyFile,mkdir,rm,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const output=path.join(root,'dist');
+const files=['index.html','style.css','app.js','geography.js','osm-map.js','traffic.js','appearance.js','building-model.js','special-car.js','data/iwonicz-osm.json','data/ortho-observations.json'];
+await rm(output,{recursive:true,force:true});
+await mkdir(path.join(output,'data'),{recursive:true});
+for(const file of files)await copyFile(path.join(root,file),path.join(output,file));
+await writeFile(path.join(output,'.nojekyll'),'');
+console.log(`Prepared ${files.length} static files in dist/`);
