@@ -1,12 +1,13 @@
 import {roofAppearance,shade} from './appearance.js';
 import {makeIsometricProjection,polygonRings,featureCenter,contains} from './geography.js';
+export const RASTER_DENSITY=2;
 export function createOSMMap(data,observations={}){
  const projection=makeIsometricProjection(data.bbox);const {width,height,project}=projection;
  const boundaryRings=polygonRings(data.boundary).map(r=>r.map(project));
  const makePath=rings=>{const p=new Path2D();for(const ring of rings){ring.forEach((v,i)=>i?p.lineTo(v.x,v.y):p.moveTo(v.x,v.y));p.closePath();}return p;};
  const boundary=makePath(boundaryRings);
  const features=data.elements.map(e=>{const rings=polygonRings(e).map(r=>r.map(project));return {...e,rings,path:rings.length?makePath(rings):null,points:e.geometry?.map(project),center:featureCenter(e,project)};});
- const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const c=canvas.getContext('2d');c.imageSmoothingEnabled=false;
+ const canvas=document.createElement('canvas');canvas.width=width*RASTER_DENSITY;canvas.height=height*RASTER_DENSITY;const c=canvas.getContext('2d');c.scale(RASTER_DENSITY,RASTER_DENSITY);c.imageSmoothingEnabled=false;
  c.fillStyle='#42612c';c.fillRect(0,0,width,height);c.fillStyle='#76a447';c.fill(boundary,'evenodd');c.save();c.clip(boundary,'evenodd');
  const areaColor=t=>t.natural==='water'||t.water?'#548fb0':t.landuse==='forest'||t.natural==='wood'?'#5b883c':t.landuse==='residential'?'#83a54f':t.landuse==='cemetery'?'#719153':t.leisure==='park'||t.leisure==='garden'?'#81ae50':t.landuse==='meadow'||t.landuse==='grass'||t.natural==='grassland'?'#91b65c':t.landuse==='farmland'?'#b2ae63':t.leisure==='pitch'?'#6e9d4f':t.natural==='scrub'?'#739c49':null;
  // Landcover first, then decorative trees only inside woodland polygons. All features are clipped to city limits.
@@ -17,8 +18,8 @@ export function createOSMMap(data,observations={}){
  // Repeated grass pixels and diamond parcel lines recall a classic isometric simulation.
  for(let i=0;i<55000;i++){const x=Math.floor(random()*width),y=Math.floor(random()*height);c.fillStyle=i%3?'#638d3930':'#b2c76840';c.fillRect(x,y,2,1);}
  c.strokeStyle='#466c3022';c.lineWidth=1;for(let n=-height;n<width;n+=40){c.beginPath();c.moveTo(n,0);c.lineTo(n+height*2,height);c.stroke();c.beginPath();c.moveTo(n,0);c.lineTo(n-height*2,height);c.stroke();}
- for(let i=0;i<14500;i++){const x=Math.round(random()*width),y=Math.round(random()*height);if(!c.isPointInPath(forest,x,y,'evenodd'))continue;const size=5+Math.floor(random()*5);c.fillStyle='#304d2d55';c.fillRect(x-2,y+1,10,3);c.fillStyle='#70573c';c.fillRect(x,y-3,2,6);c.fillStyle=i%3?'#2c6334':'#3d7337';c.fillRect(x-size/2,y-size,size,size-1);c.fillRect(x-size/2+2,y-size-4,size-4,6);c.fillRect(x-1,y-size-7,2,4);c.fillStyle='#649345';c.fillRect(x-size/2,y-size,2,size-4);c.fillRect(x-size/2+2,y-size-4,2,5);}
- const stroke=(f,color,lineWidth,dash=[])=>{if(!f.points?.length)return;c.beginPath();f.points.forEach((p,i)=>i?c.lineTo(Math.round(p.x),Math.round(p.y)):c.moveTo(Math.round(p.x),Math.round(p.y)));c.strokeStyle=color;c.lineWidth=lineWidth;c.lineJoin='round';c.lineCap='round';c.setLineDash(dash);c.stroke();c.setLineDash([]);};
+ for(let i=0;i<14500;i++){const x=Math.round(random()*width),y=Math.round(random()*height);if(!c.isPointInPath(forest,x*RASTER_DENSITY,y*RASTER_DENSITY,'evenodd'))continue;const size=5+Math.floor(random()*5);c.fillStyle='#304d2d55';c.fillRect(x-2,y+1,10,3);c.fillStyle='#70573c';c.fillRect(x,y-3,2,6);c.fillStyle=i%3?'#2c6334':'#3d7337';c.fillRect(x-size/2,y-size,size,size-1);c.fillRect(x-size/2+2,y-size-4,size-4,6);c.fillRect(x-1,y-size-7,2,4);c.fillStyle='#649345';c.fillRect(x-size/2,y-size,2,size-4);c.fillRect(x-size/2+2,y-size-4,2,5);}
+ const stroke=(f,color,lineWidth,dash=[])=>{if(!f.points?.length)return;c.beginPath();f.points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.strokeStyle=color;c.lineWidth=lineWidth;c.lineJoin='round';c.lineCap='round';c.setLineDash(dash);c.stroke();c.setLineDash([]);};
  features.filter(f=>f.tags.waterway).forEach(f=>stroke(f,'#468ba6',f.tags.waterway==='river'?6:3));
  // Ground surfaces retain their OSM outlines; no new geometry is inferred from photos.
  for(const f of features.filter(f=>f.path&&(f.tags.amenity==='parking'||f.tags.highway==='pedestrian'&&f.tags.area==='yes'))){c.fillStyle=f.tags.amenity==='parking'?'#92958b':'#d1c9aa';c.fill(f.path,'evenodd');c.strokeStyle='#b9b49c';c.lineWidth=1;c.stroke(f.path);}
@@ -34,14 +35,14 @@ export function createOSMMap(data,observations={}){
   const roof=roofAppearance(f,observations);const all=f.rings.flat();const floors=Math.max(1,Math.min(6,Number(f.tags['building:levels'])||((f.id%5===0)?3:2)));const elevation=floors*4+3;
   const left=Math.floor(Math.min(...all.map(p=>p.x)))-8,right=Math.ceil(Math.max(...all.map(p=>p.x)))+9;
   const top=Math.floor(Math.min(...all.map(p=>p.y)))-elevation-8,bottom=Math.ceil(Math.max(...all.map(p=>p.y)))+8;
-  const sprite=document.createElement('canvas');sprite.width=right-left;sprite.height=bottom-top;const b=sprite.getContext('2d');b.translate(-left,-top);
+  const sprite=document.createElement('canvas');sprite.width=(right-left)*RASTER_DENSITY;sprite.height=(bottom-top)*RASTER_DENSITY;const b=sprite.getContext('2d');b.scale(RASTER_DENSITY,RASTER_DENSITY);b.translate(-left,-top);
   b.fillStyle='#263a2c55';b.save();b.translate(5,4);b.fill(f.path,'evenodd');b.restore();
   for(const ring of f.rings){for(let i=1;i<ring.length;i++){const a=ring[i-1],z=ring[i];if(z.x-a.x<0)continue;b.fillStyle=z.y>a.y?'#b99263':'#dfc795';b.beginPath();b.moveTo(a.x,a.y);b.lineTo(z.x,z.y);b.lineTo(z.x,z.y-elevation);b.lineTo(a.x,a.y-elevation);b.closePath();b.fill();b.strokeStyle='#665a42';b.lineWidth=.6;b.stroke();
    const length=Math.hypot(z.x-a.x,z.y-a.y);for(let row=0;row<floors;row++)for(let k=5;k<length-3;k+=6){const t=k/length;b.fillStyle='#385959';b.fillRect(Math.round(a.x+(z.x-a.x)*t),Math.round(a.y+(z.y-a.y)*t-3-row*4),2,2);}}
   }
   b.save();b.translate(0,-elevation);b.fillStyle=roof.color;b.fill(f.path,'evenodd');b.strokeStyle='#544b3b';b.lineWidth=1;b.stroke(f.path);b.restore();
   const long=f.rings[0];if(long.length>=4){b.strokeStyle=shade(roof.color,25);b.lineWidth=1;b.beginPath();b.moveTo(long[0].x,long[0].y-elevation-1);b.lineTo(long[1].x,long[1].y-elevation-1);b.stroke();}
-  buildings.push({image:sprite,x:left,y:top,depth:Math.max(...all.map(p=>p.y)),width:sprite.width,height:sprite.height});
+  buildings.push({image:sprite,x:left,y:top,depth:Math.max(...all.map(p=>p.y)),width:right-left,height:bottom-top});
  }
  c.restore();c.strokeStyle='#c3d38b';c.lineWidth=2;c.setLineDash([10,7]);c.stroke(boundary);c.setLineDash([]);
  const inside=f=>f.center&&contains(f.center,boundaryRings);

@@ -1,4 +1,5 @@
-import {createOSMMap} from './osm-map.js';
+import {createOSMMap,RASTER_DENSITY} from './osm-map.js';
+import {locateSpecialCar} from './special-car.js';
 import {buildNetwork,createSimulation,drawAgent} from './traffic.js';
 const canvas=document.querySelector('#map'),ctx=canvas.getContext('2d');
 let mapData;
@@ -14,10 +15,12 @@ const photoResponse=await fetch('./data/ortho-observations.json');
 if(!photoResponse.ok)throw new Error('Nie udało się wczytać metadanych ortofotomapy');
 const photoObservations=await photoResponse.json();
 const osm=createOSMMap(mapData,photoObservations),scene=osm.scene,places=osm.places;
+const specialCar=locateSpecialCar(mapData,osm.projection.project);
+places.push({id:'zdrojowa-87',name:'Zdrojowa 87 · skurczybyk',kind:'Szary SUV z 1990 roku',category:'architecture',icon:'⌂',x:specialCar.x,y:specialCar.y,osmType:'way',osmId:specialCar.houseId,desc:'Zaparkowany szary SUV inspirowany Cherokee XJ z 1990 roku. Autorski dodatek do mapy przy adresie Zdrojowa 87; nie przedstawia rzeczywistego stanu parkowania.'});
 const simulation=createSimulation(buildNetwork(mapData.elements,osm.projection.project,osm.isInside));
 const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 let paused=motionPreference.matches,simulationSpeed=1;
-const WORLD_W=scene.width,WORLD_H=scene.height,MAX_ZOOM=12;
+const WORLD_W=osm.projection.width,WORLD_H=osm.projection.height,MAX_ZOOM=12;
 const home=()=>({x:WORLD_W/2,y:WORLD_H/2,z:1});
 const escaped=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labelBoxes=new Map(),drawnMarkers=new Set();
@@ -29,16 +32,19 @@ if(hash&&location.hash.startsWith('#osm@')){view={...view,...osm.projection.toIs
 function save(){history.replaceState(null,'',`#iso@${Math.round(view.x)},${Math.round(view.y)},${view.z.toFixed(2)}${selected?','+selected.id:''}`);}
 function point(x,y){return {x:(x-view.x)*fit*view.z+width/2,y:(y-view.y)*fit*view.z+height/2};}
 function draw(){
- ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#42612c';ctx.fillRect(0,0,width,height);ctx.imageSmoothingEnabled=false;
+ ctx.setTransform(devicePixelRatio*RASTER_DENSITY,0,0,devicePixelRatio*RASTER_DENSITY,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#42612c';ctx.fillRect(0,0,width,height);ctx.imageSmoothingEnabled=false;
  const s=fit*view.z;ctx.drawImage(scene,width/2-view.x*s,height/2-view.y*s,WORLD_W*s,WORLD_H*s);
  // One world coordinate system for terrain, buildings, traffic, labels and pointer picking.
  const left=view.x-width/2/s,top=view.y-height/2/s,right=left+width/s,bottom=top+height/s;
  ctx.save();ctx.translate(width/2-view.x*s,height/2-view.y*s);ctx.scale(s,s);ctx.clip(osm.boundaryPath,'evenodd');
  const sprites=osm.buildings.filter(b=>b.x+b.width>left&&b.x<right&&b.y+b.height>top&&b.y<bottom).map(b=>({...b,kind:'building'}));
- for(const actor of simulation.positions())if(actor.x>left-20&&actor.x<right+20&&actor.y>top-20&&actor.y<bottom+20)sprites.push({...actor,depth:actor.y});
+ for(const actor of [...simulation.positions(),specialCar])if(actor.x>left-20&&actor.x<right+20&&actor.y>top-20&&actor.y<bottom+20)sprites.push({...actor,depth:actor.y});
  sprites.sort((a,b)=>a.depth-b.depth);
- for(const sprite of sprites){if(sprite.kind==='building')ctx.drawImage(sprite.image,sprite.x,sprite.y);else drawAgent(ctx,sprite);}
+ for(const sprite of sprites){if(sprite.kind==='building')ctx.drawImage(sprite.image,sprite.x,sprite.y,sprite.width,sprite.height);else drawAgent(ctx,sprite);}
  ctx.restore();
+ const parkedPoint=point(specialCar.x,specialCar.y),bubble=document.querySelector('#special-bubble');
+ bubble.hidden=!(parkedPoint.x>20&&parkedPoint.x<width-20&&parkedPoint.y>65&&parkedPoint.y<height-90);
+ if(!bubble.hidden){bubble.style.left=parkedPoint.x+'px';bubble.style.top=(parkedPoint.y-16*s)+'px';}
  labelBoxes.clear();drawnMarkers.clear();const occupied=[];
  if(labels&&view.z>=4){ctx.font='10px Arial';ctx.fillStyle='#e9efd0';for(const road of osm.roadLabels){const pos=point(road.x,road.y);if(pos.x<20||pos.x>width-100||pos.y<70||pos.y>height-90)continue;ctx.fillText(road.name,pos.x,pos.y);}}
  const visible=visiblePlaces().slice().sort((a,b)=>(b.id===selected?.id)-(a.id===selected?.id));
@@ -51,11 +57,11 @@ function draw(){
  document.querySelector('#zoom-level').textContent=Math.round(view.z*100)+'%';
  if(s>0){const metresPerPixel=osm.projection.metresPerUnit/Math.SQRT2/s;const target=100*metresPerPixel;const unit=10**Math.floor(Math.log10(target));const distance=[1,2,5,10].map(v=>v*unit).find(v=>v>=target)||unit*10;const pixels=distance/metresPerPixel;document.querySelector('#scale-bar').style.width=pixels+'px';document.querySelector('#scale-label').textContent=distance>=1000?distance/1000+' km':distance+' m';}
 }
-function resize(){const r=canvas.getBoundingClientRect();width=r.width;height=r.height;canvas.width=Math.round(width*devicePixelRatio);canvas.height=Math.round(height*devicePixelRatio);fit=Math.min(width/WORLD_W,height/WORLD_H)*.94;draw();}new ResizeObserver(resize).observe(canvas);
+function resize(){const r=canvas.getBoundingClientRect();width=r.width;height=r.height;canvas.width=Math.round(width*devicePixelRatio*RASTER_DENSITY);canvas.height=Math.round(height*devicePixelRatio*RASTER_DENSITY);fit=Math.min(width/WORLD_W,height/WORLD_H)*.94;draw();}new ResizeObserver(resize).observe(canvas);
 function visiblePlaces(){return places.filter(p=>(filter==='all'||p.category===filter)&&(p.name+" "+p.kind).toLocaleLowerCase('pl').includes(query.toLocaleLowerCase('pl')));}
 function renderList(){const list=document.querySelector('#places');list.replaceChildren();const visible=visiblePlaces();document.querySelector('#count').textContent=String(visible.length).padStart(2,'0');if(!visible.length){const el=document.createElement('p');el.className='empty';el.textContent='Nie znaleziono miejsca. Spróbuj innej nazwy lub kategorii.';list.append(el);}for(const p of visible){const button=document.createElement('button');button.className='place'+(selected?.id===p.id?' selected':'');button.setAttribute('aria-pressed',String(selected?.id===p.id));button.innerHTML=`<span class="place-icon ${p.category==='nature'?'green':''}">${p.icon}</span><span class="place-copy"><strong>${escaped(p.name)}</strong><small>${escaped(p.kind)}</small></span><span class="place-arrow">→</span>`;button.onclick=()=>select(p);list.append(button);}draw();}
 function renderCard(){const card=document.querySelector('#card');card.hidden=!selected;if(!selected)return;card.innerHTML=`<button class="close" aria-label="Zamknij opis">×</button><span class="tag">${selected.category==='nature'?'NATURA I SPACERY':'ARCHITEKTURA UZDROWISKA'}</span><h2>${escaped(selected.name)}</h2><p>${escaped(selected.desc)}</p>${selected.roofObserved?'<p class="photo-source">Kolor dachu: ortofotomapa GUGiK, 19.06.2024 · pomiar przybliżony.</p>':''}<div class="card-foot"><a href="https://www.openstreetmap.org/${selected.osmType}/${selected.osmId}" target="_blank" rel="noopener noreferrer">Zobacz obiekt w OpenStreetMap →</a></div>`;card.querySelector('button').onclick=()=>{selected=null;renderCard();renderList();save();};}
-function select(p){selected=p;view.x=p.x;view.z=Math.max(view.z,4);view.y=p.y+height*.28/(fit*view.z);renderCard();renderList();save();}
+function select(p){selected=p;view.x=p.x;view.z=Math.max(view.z,p.id==='zdrojowa-87'?9:4);view.y=p.y+height*(width<600&&p.id==='zdrojowa-87'?.05:.28)/(fit*view.z);renderCard();renderList();save();}
 function zoom(amount,anchor){const old=view.z;view.z=Math.max(.65,Math.min(MAX_ZOOM,view.z*amount));if(anchor){view.x+=(anchor.x-width/2)/fit*(1/old-1/view.z);view.y+=(anchor.y-height/2)/fit*(1/old-1/view.z);}draw();save();}
 document.querySelector('#zoom-in').onclick=()=>zoom(1.2);document.querySelector('#zoom-out').onclick=()=>zoom(1/1.2);document.querySelector('#reset').onclick=()=>{view=home();selected=null;renderCard();renderList();save();};document.querySelector('#labels').onclick=e=>{labels=!labels;e.currentTarget.setAttribute('aria-pressed',String(labels));draw();};
 document.querySelector('#search').oninput=e=>{query=e.target.value;if(selected&&!visiblePlaces().includes(selected)){selected=null;renderCard();save();}renderList();};document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===b));if(selected&&!visiblePlaces().includes(selected)){selected=null;renderCard();save();}renderList();});
@@ -77,3 +83,6 @@ let animationFrame=null,lastFrame=0;
 function tick(timestamp){animationFrame=null;if(document.hidden)return;if(timestamp-lastFrame>=1000/30){const dt=lastFrame?Math.min((timestamp-lastFrame)/1000,.1):0;lastFrame=timestamp;if(!paused){simulation.advance(dt*simulationSpeed);draw();}}animationFrame=requestAnimationFrame(tick);}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(animationFrame);animationFrame=null;}else{lastFrame=0;if(animationFrame===null)animationFrame=requestAnimationFrame(tick);}});
 updatePlayback();animationFrame=requestAnimationFrame(tick);
+
+function focusSpecialCar(){select(places.find(p=>p.id==='zdrojowa-87'));}
+document.querySelector('#find-special-car').onclick=focusSpecialCar;document.querySelector('#special-bubble').onclick=focusSpecialCar;

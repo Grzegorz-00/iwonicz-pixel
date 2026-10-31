@@ -35,7 +35,7 @@ Overpass okazał się niedostępny podczas pracy; aplikacja i importer korzystaj
 ## Obsługa
 
 - Przeciąganie myszą i dotykiem, powiększanie kółkiem, gestem lub przyciskami, do 1200%.
-- 92 nazwane miejsca z OSM, sześć wyróżnionych; wyszukiwanie, kategorie, opisy i odsyłacze do obiektów źródłowych.
+- 92 nazwane miejsca z OSM oraz autorski wpis Zdrojowa 87, sześć wyróżnionych; wyszukiwanie, kategorie, opisy i odsyłacze do obiektów źródłowych.
 - W widoku całego miasta wyróżnione miejsca; kolejne oznaczenia pojawiają się po powiększeniu. Wyszukiwanie i filtry pokazują wyniki także w ogólnym widoku.
 - Podziałka, granica miasta, nazwy ulic przy większym przybliżeniu, przełącznik etykiet i reset do całego miasta.
 - Widok i wybrany obiekt w adresie `#iso@x,y,zoom,id`. Wcześniejsze adresy `#osm@…` są przeliczane; dawne schematyczne współrzędne `#@…` są ignorowane.
@@ -72,3 +72,11 @@ python3 scripts/analyze-orthophoto.py /sciezka/do/arkusza.tif \
 ```
 
 Importer tej analizy obsługuje wyłącznie zdjęcia północne GeoTIFF EPSG:2180 i nie zastępuje analizy dowolnych arkuszy. Dla kolejnego arkusza należy też zaktualizować jego godło w skrypcie. Pobieranie pełnego pliku może potrwać kilka minut; nie jest konieczne do odtworzenia bieżącej mapy.
+
+## Gęstość grafiki i samochód przy Zdrojowej 87
+
+Raster terenu, grafiki budynków i płótno widoku renderują się teraz w **2× większej rozdzielczości na każdej osi — 4× więcej pikseli** przy tej samej skali mapy (dodatkowo do DPR ekranu). Współrzędne geograficzne, szerokości ulic i zapisane pozycje pozostają w logicznych jednostkach. Samochody mają płynny kierunek nadwozia, cztery koła, osobne szyby, słupki, światła i zderzaki; ruch korzysta z tego samego grafu OSM.
+
+Przycisk **Zdrojowa 87** lub wyszukanie **skurczybyk** pokazuje nieruchomego, szarego SUV-a inspirowanego Cherokee XJ z 1990 roku, z kanciastym nadwoziem, siedmioma szczelinami grilla, relingami i chmurką „skurczybyk”. Jest to autorski dodatek wskazany przez użytkownika. Adres pochodzi z OSM, obrys `way/347637101`; pozycję auta wybrano przy najbliższym dojeździe `highway=service`, poza obrysem domu. Nie jest to informacja o rzeczywistym pojeździe pod tym adresem. Auto stoi także wtedy, gdy symulacja ruchu jest uruchomiona. Wpis adresowy ma identyfikator `zdrojowa-87` i można udostępnić jego widok w URL.
+
+Do hostingu statycznego dołącz `special-car.js`. Testy sprawdzają adres i dojazd, a w Chromium zweryfikowano rzeczywisty mnożnik powierzchni rastra 4×, chmurkę, wyszukiwanie i odtwarzanie widoku.

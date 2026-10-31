@@ -41,12 +41,45 @@ export function drawAgent(c,a){
  const colors=['#bc3e34','#d6b43e','#f2e6c4','#3775a4','#6e89a1','#454e4c'];
  const x=Math.round(a.x),y=Math.round(a.y);
  if(a.kind==='person'){const step=a.moving?Math.round(Math.sin(a.phase)):0;c.fillStyle='#263f3066';c.fillRect(x-1,y+1,4,2);c.fillStyle='#293c39';c.fillRect(x-1-step,y-2,1,3);c.fillRect(x+1+step,y-2,1,3);c.fillStyle=colors[a.color];c.fillRect(x-1,y-6,3,4);c.fillStyle='#ecc393';c.fillRect(x,y-9,2,3);c.fillStyle='#614733';c.fillRect(x,y-10,2,1);return;}
- const angle=Math.round(Math.atan2(a.dy,a.dx)/(Math.PI/4))*Math.PI/4;
- const u={x:Math.cos(angle)*7,y:Math.sin(angle)*7},v={x:-Math.sin(angle)*3,y:Math.cos(angle)*3};
- const corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([i,j])=>({x:Math.round(x+u.x*i+v.x*j),y:Math.round(y+u.y*i+v.y*j)}));
- function poly(points,color){c.fillStyle=color;c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.closePath();c.fill();}
- poly(corners.map(p=>({x:p.x+2,y:p.y+2})),'#30452b55');poly(corners,'#303a38');poly(corners.map(p=>({x:p.x,y:p.y-3})),colors[a.color]);
- const roof=corners.map(p=>({x:x+(p.x-x)*.55,y:y+(p.y-y)*.7-5}));poly(roof,colors[a.color]);
- const windshield=[roof[1],roof[2],{x:corners[2].x,y:corners[2].y-3},{x:corners[1].x,y:corners[1].y-3}];poly(windshield,'#a5d5d3');
- c.fillStyle='#fff4bd';c.fillRect(Math.round(x+u.x),Math.round(y+u.y-3),2,1);c.fillStyle='#f4b09a';c.fillRect(Math.round(x-u.x),Math.round(y-u.y-3),1,1);
+ drawVehicle(c,a,colors[a.color]);
+}
+
+/** Small 3D bodies with continuous headings, tires, glazing, bumpers and lights. */
+export function drawVehicle(c,a,color='#7d858a'){
+ const suv=a.model==='cherokee-1990',variant=suv?'suv':['sedan','hatchback','wagon'][a.id%3];
+ const length=suv?10.5:variant==='wagon'?9.2:variant==='sedan'?8.7:7.4,width=suv?4.1:3.3;
+ const bodyHeight=suv?4.8:3.2,roofHeight=suv?9:variant==='sedan'?5.4:variant==='wagon'?6.2:5.8;
+ const magnitude=Math.hypot(a.dx,a.dy)||1,ux=a.dx/magnitude,uy=a.dy/magnitude,vx=-uy,vy=ux;
+ const base=suv?'#858b8f':color;
+ const shade=(hex,n)=>'#'+hex.slice(1).match(/../g).map(v=>Math.max(0,Math.min(255,parseInt(v,16)+n)).toString(16).padStart(2,'0')).join('');
+ const p=(t,w,z=0)=>({x:a.x+t*ux+w*vx,y:a.y+t*uy+w*vy-z});
+ function polygon(points,fill,stroke){c.fillStyle=fill;c.beginPath();points.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=.45;c.stroke();}}
+ function line(points,stroke,lineWidth=.6){c.beginPath();points.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.strokeStyle=stroke;c.lineWidth=lineWidth;c.stroke();}
+ const footprint=[p(-length,-width),p(length,-width),p(length,width),p(-length,width)];
+ polygon(footprint.map(q=>({x:q.x+2,y:q.y+2})),'#172b2555');
+ // Lower chassis and four exposed rubber tires.
+ polygon(footprint,'#252c2e');
+ const wheels=[];for(const t of [-length*.62,length*.61])for(const w of [-width-.1,width+.1])wheels.push({t,w,...p(t,w,1.2)});
+ for(const wheel of wheels.sort((a,b)=>a.y-b.y)){c.fillStyle='#202426';c.beginPath();c.ellipse(wheel.x,wheel.y,1.65,2.3,Math.atan2(uy,ux),0,Math.PI*2);c.fill();c.fillStyle='#9ba2a1';c.beginPath();c.ellipse(wheel.x,wheel.y,.75,1.05,Math.atan2(uy,ux),0,Math.PI*2);c.fill();}
+ const sides=[[-length,-width,length,-width],[length,-width,length,width],[length,width,-length,width],[-length,width,-length,-width]];
+ for(const [t,w,t2,w2]of sides.sort((a,b)=>(p(a[0],a[1]).y+p(a[2],a[3]).y)-(p(b[0],b[1]).y+p(b[2],b[3]).y))){polygon([p(t,w,1),p(t2,w2,1),p(t2,w2,bodyHeight),p(t,w,bodyHeight)],shade(base,w>0?-22:-8),'#354043');}
+ polygon([p(-length,-width,bodyHeight),p(length,-width,bodyHeight),p(length,width,bodyHeight),p(-length,width,bodyHeight)],shade(base,12),'#3c494b');
+ const back=suv?-length*.87:variant==='sedan'?-length*.52:variant==='wagon'?-length*.85:-length*.8,front=suv?length*.28:variant==='sedan'?length*.2:length*.35,cabinW=width*.9;
+ // Black window band and separate front / rear windscreens.
+ for(const side of [-1,1]){
+  polygon([p(back,side*width,bodyHeight),p(front,side*width,bodyHeight),p(front-.9,side*cabinW,roofHeight),p(back+.7,side*cabinW,roofHeight)],'#344b57','#27383b');
+  const pillars=suv?[back+(front-back)*.32,back+(front-back)*.64]:[back+(front-back)*.5];
+  for(const t of pillars)line([p(t,side*width,bodyHeight),p(t,side*cabinW,roofHeight)],shade(base,-5),suv?1:.7);
+  line([p(back,side*width,bodyHeight-.7),p(length*.65,side*width,bodyHeight-.7)],'#3b4243',.6);
+  for(const t of [back+(front-back)*.38,front-.8])line([p(t,side*width,bodyHeight-.8),p(t+.7,side*width,bodyHeight-.8)],'#d7dcda',.5);
+ }
+ polygon([p(front,-width,bodyHeight),p(front,width,bodyHeight),p(front-.9,cabinW,roofHeight),p(front-.9,-cabinW,roofHeight)],'#91b6bd','#34494c');
+ polygon([p(back,-width,bodyHeight),p(back,width,bodyHeight),p(back+.7,cabinW,roofHeight),p(back+.7,-cabinW,roofHeight)],'#5d7f8b','#34494c');
+ polygon([p(back+.7,-cabinW,roofHeight),p(front-.9,-cabinW,roofHeight),p(front-.9,cabinW,roofHeight),p(back+.7,cabinW,roofHeight)],shade(base,24),'#536061');
+ line([p(front,-width*.8,bodyHeight+.1),p(length*.92,-width*.8,bodyHeight+.1)],shade(base,40),.5);
+ // Separate headlights, seven-slot grille on the boxy gray SUV, rear lamps and bumpers.
+ line([p(length,-width,1.5),p(length,width,1.5)],'#303638',1.3);
+ line([p(-length,-width,1.5),p(-length,width,1.5)],'#303638',1.2);
+ for(const side of [-1,1]){polygon([p(length,side*width*.95,2),p(length,side*width*.5,2),p(length,side*width*.5,bodyHeight-.35),p(length,side*width*.95,bodyHeight-.35)],'#fff0b8');polygon([p(-length,side*width*.95,2),p(-length,side*width*.65,2),p(-length,side*width*.65,bodyHeight-.4),p(-length,side*width*.95,bodyHeight-.4)],'#bb493d');}
+ if(suv){for(let i=-3;i<=3;i++)line([p(length,i*.45,2),p(length,i*.45,bodyHeight-.3)],'#303a3d',.35);for(const side of [-1,1])line([p(back+1,side*cabinW*.75,roofHeight+1),p(front-1.3,side*cabinW*.75,roofHeight+1)],'#343d40',.8);line([p(length*.3,-width*1.1,bodyHeight+1),p(length*.3,-width*1.22,bodyHeight+.5)],'#374248',1);}
 }
