@@ -85,4 +85,4 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnim
 updatePlayback();animationFrame=requestAnimationFrame(tick);
 
 function focusSpecialCar(){select(places.find(p=>p.id==='zdrojowa-87'));}
-document.querySelector('#find-special-car').onclick=focusSpecialCar;document.querySelector('#special-bubble').onclick=focusSpecialCar;
+document.querySelector('#special-bubble').onclick=focusSpecialCar;

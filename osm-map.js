@@ -1,3 +1,4 @@
+import {buildingProfile,gabledRoof} from './building-model.js';
 import {roofAppearance,shade} from './appearance.js';
 import {makeIsometricProjection,polygonRings,featureCenter,contains} from './geography.js';
 export const RASTER_DENSITY=2;
@@ -32,16 +33,22 @@ export function createOSMMap(data,observations={}){
  // Pre-render individual buildings so moving actors can be sorted behind their walls.
  const buildings=[];
  for(const f of features.filter(f=>f.tags.building&&f.path&&f.center&&contains(f.center,boundaryRings)).sort((a,b)=>a.center.y-b.center.y)){
-  const roof=roofAppearance(f,observations);const all=f.rings.flat();const floors=Math.max(1,Math.min(6,Number(f.tags['building:levels'])||((f.id%5===0)?3:2)));const elevation=floors*4+3;
+  const roof=roofAppearance(f,observations);const baseRing=f.rings[0].map(projection.fromIso);const profile=buildingProfile(f,baseRing);const gable=profile.house?gabledRoof(baseRing):null;const all=f.rings.flat();const floors=profile.floors;const elevation=floors*4+3;const roofRise=gable?.rise||0;
   const left=Math.floor(Math.min(...all.map(p=>p.x)))-8,right=Math.ceil(Math.max(...all.map(p=>p.x)))+9;
-  const top=Math.floor(Math.min(...all.map(p=>p.y)))-elevation-8,bottom=Math.ceil(Math.max(...all.map(p=>p.y)))+8;
+  const top=Math.floor(Math.min(...all.map(p=>p.y)))-elevation-roofRise-8,bottom=Math.ceil(Math.max(...all.map(p=>p.y)))+8;
   const sprite=document.createElement('canvas');sprite.width=(right-left)*RASTER_DENSITY;sprite.height=(bottom-top)*RASTER_DENSITY;const b=sprite.getContext('2d');b.scale(RASTER_DENSITY,RASTER_DENSITY);b.translate(-left,-top);
   b.fillStyle='#263a2c55';b.save();b.translate(5,4);b.fill(f.path,'evenodd');b.restore();
-  for(const ring of f.rings){for(let i=1;i<ring.length;i++){const a=ring[i-1],z=ring[i];if(z.x-a.x<0)continue;b.fillStyle=z.y>a.y?'#b99263':'#dfc795';b.beginPath();b.moveTo(a.x,a.y);b.lineTo(z.x,z.y);b.lineTo(z.x,z.y-elevation);b.lineTo(a.x,a.y-elevation);b.closePath();b.fill();b.strokeStyle='#665a42';b.lineWidth=.6;b.stroke();
+  const wallRings=gable?[gable.wallRing.map(p=>({...projection.toIso(p),lift:gable.height(p)}))]:f.rings;
+  for(const ring of wallRings){const winding=Math.sign(ring.reduce((sum,p,i)=>{const q=ring[(i+1)%ring.length];return sum+p.x*q.y-q.x*p.y;},0))||1;for(let i=1;i<ring.length;i++){const a=ring[i-1],z=ring[i];if((z.x-a.x)*winding>=0)continue;b.fillStyle=z.y>a.y?'#b99263':'#dfc795';b.beginPath();b.moveTo(a.x,a.y);b.lineTo(z.x,z.y);b.lineTo(z.x,z.y-elevation-(z.lift||0));b.lineTo(a.x,a.y-elevation-(a.lift||0));b.closePath();b.fill();b.strokeStyle='#665a42';b.lineWidth=.6;b.stroke();
    const length=Math.hypot(z.x-a.x,z.y-a.y);for(let row=0;row<floors;row++)for(let k=5;k<length-3;k+=6){const t=k/length;b.fillStyle='#385959';b.fillRect(Math.round(a.x+(z.x-a.x)*t),Math.round(a.y+(z.y-a.y)*t-3-row*4),2,2);}}
   }
-  b.save();b.translate(0,-elevation);b.fillStyle=roof.color;b.fill(f.path,'evenodd');b.strokeStyle='#544b3b';b.lineWidth=1;b.stroke(f.path);b.restore();
-  const long=f.rings[0];if(long.length>=4){b.strokeStyle=shade(roof.color,25);b.lineWidth=1;b.beginPath();b.moveTo(long[0].x,long[0].y-elevation-1);b.lineTo(long[1].x,long[1].y-elevation-1);b.stroke();}
+  if(gable){
+   const faces=gable.faces.map((face,index)=>({index,points:face.map(p=>{const q=projection.toIso(p);return {x:q.x,y:q.y-elevation-gable.height(p)};})})).sort((a,z)=>a.points.reduce((s,p)=>s+p.y,0)/a.points.length-z.points.reduce((s,p)=>s+p.y,0)/z.points.length);
+   for(const face of faces){b.beginPath();face.points.forEach((p,i)=>i?b.lineTo(p.x,p.y):b.moveTo(p.x,p.y));b.closePath();b.fillStyle=shade(roof.color,face.index===0?15:-22);b.fill();b.strokeStyle=shade(roof.color,-38);b.lineWidth=.7;b.stroke();}
+  }else{
+   b.save();b.translate(0,-elevation);b.fillStyle=roof.color;b.fill(f.path,'evenodd');b.strokeStyle='#544b3b';b.lineWidth=1;b.stroke(f.path);b.restore();
+   const long=f.rings[0];if(long.length>=4){b.strokeStyle=shade(roof.color,25);b.lineWidth=1;b.beginPath();b.moveTo(long[0].x,long[0].y-elevation-1);b.lineTo(long[1].x,long[1].y-elevation-1);b.stroke();}
+  }
   buildings.push({image:sprite,x:left,y:top,depth:Math.max(...all.map(p=>p.y)),width:right-left,height:bottom-top});
  }
  c.restore();c.strokeStyle='#c3d38b';c.lineWidth=2;c.setLineDash([10,7]);c.stroke(boundary);c.setLineDash([]);
